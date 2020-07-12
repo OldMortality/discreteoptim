@@ -177,7 +177,7 @@ def compute(metadata, solver_file_override=None):
             file_name = solver_file[split+1:]
             sys.path.insert(0, path)
             solver_file = file_name
-        #print(problem.input_file)
+
         submission = output(problem.input_file, solver_file)
         if submission != None:
             results[problem.id] = {'output':submission}
@@ -188,7 +188,6 @@ def compute(metadata, solver_file_override=None):
 
 
 def load_input_data(file_location):
-    #print(file_location)
     with open(file_location, 'r') as input_data_file:
         input_data = ''.join(input_data_file.readlines())
     return input_data

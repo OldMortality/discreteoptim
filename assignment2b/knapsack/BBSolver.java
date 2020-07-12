@@ -15,7 +15,7 @@ public class BBSolver {
 		for (int i = 0; i < a.length; i++) {
 			System.out.print(a[i] + " ");
 		}
-		System.out.println("]");
+		//System.out.println("]");
 	}
 
 	private int bestValue = 0;
@@ -23,6 +23,7 @@ public class BBSolver {
 	private int[] bestItems;
 
 	private void setBestValue(int bestValue) {
+		//System.out.println("Best value is "+ bestValue);
 		this.bestValue = bestValue;
 	}
 
@@ -54,6 +55,8 @@ public class BBSolver {
 		int[] bestIt = new int[n];
 		setBestItems(bestIt);
 	}
+
+	static int nodeCounter = 0;
 
 	/*
 	 * @param value : The total value until the current node
@@ -106,27 +109,33 @@ public class BBSolver {
 				weightAdded += weightsToGo[i];
 				sum += valuesToGo[i];
 			} else {
-				if (i < weightsToGo.length ) {
+				if (i < weightsToGo.length) {
 					// take a piece of the item, if there are any
 					float prop = (float) (capacityLeft - weightAdded) / weightsToGo[i];
-					sum += prop * valuesToGo[i ];
-					continue;
+					sum += prop * valuesToGo[i];
+					break;
 				}
 			}
 		}
 		return (sum);
 	}
 
+	/*
 	public void goElement(int ix, int value, int k_used, int[] items, int K, int[] v, int[] w) {
 
-		// items = items.clone();
-		// printArray(items);
+		
+		System.out.println("element count" + nodeCounter++);
 		if (ix < items.length) {
 
 			if (k_used + w[ix] <= K) {
 
-				if (getOptimistic(value, K, Arrays.copyOfRange(v, ix, v.length),
-						Arrays.copyOfRange(w, ix, w.length)) > getBestValue()) {
+				// if (getOptimistic(value, K, Arrays.copyOfRange(v, ix, v.length),
+				// Arrays.copyOfRange(w, ix, w.length)) > getBestValue()) {
+				float bestPossible = getOptimisticLinear(value, K - k_used, Arrays.copyOfRange(v, ix, v.length),
+						Arrays.copyOfRange(w, ix, w.length));
+				if (bestPossible > // it is possible to take it
+						getBestValue()) {
+
 					// There may be a point in taking this element
 					// try taking it
 					items[ix] = 1;
@@ -144,7 +153,45 @@ public class BBSolver {
 				goElement(ix + 1, value, k_used, items, K, v, w);
 			}
 		} else {
-			// leaf node
+			// reached the end
+			setBest(value, items);
+		}
+
+	}
+*/
+	
+	
+	public void goNode(int ix, int value, int k_used, int[] _items, int K, int[] v, int[] w, boolean leftNode) {
+		//System.out.println(nodeCounter++ + " " + ix + leftNode);
+		int[] items = _items.clone();
+		if (ix < items.length) {
+			if (leftNode) {
+				if (k_used + w[ix] <= K) {
+					// it is possible to take it
+					float bestPossible = getOptimisticLinear(value, K - k_used, Arrays.copyOfRange(v, ix, v.length),
+							Arrays.copyOfRange(w, ix, w.length));
+					if (bestPossible > getBestValue()) {
+						// There may be a point in continuing
+						items[ix] = 1;
+						goNode(ix + 1, value + v[ix], k_used + w[ix], items, K, v, w, true);
+						goNode(ix + 1, value + v[ix], k_used + w[ix], items, K, v, w, false);
+					}
+				}
+
+			} else {
+				// a right node
+				float bestPossible = getOptimisticLinear(value, K - k_used, Arrays.copyOfRange(v, ix+1, v.length),
+						Arrays.copyOfRange(w, ix+1, w.length));
+				if (bestPossible > getBestValue()) {
+					// There may be a point in continuing
+					items[ix] = 0;
+					goNode(ix + 1, value, k_used, items, K, v, w, true);
+					goNode(ix + 1, value, k_used, items, K, v, w, false);
+				}
+			}
+		}
+		// leaf node
+		if (ix == items.length - 1) {
 			setBest(value, items);
 		}
 
@@ -165,36 +212,28 @@ public class BBSolver {
 		int[] bestIts = getBestItems();
 		String line2 = "";
 		for (int i = 0; i < bestIts.length; i++) {
-			line2 = line2 + bestItemsOriginal[i] + " " ;
+			line2 = line2 + bestItemsOriginal[i] + " ";
 		}
 		return (line1 + line2);
 	}
 
 	/*
-	public Float[] getValueDensity(int[] values,int[] weights) {
-		Float[] result = new Float[values.length]; 
-		for (int i=0; i < values.length;i++) {
-			float f = ( (float)  values[i] )/ ( (float) weights[i]  );
-			result[i] = Float.valueOf( f );
-		}
-		return(result);
-	}
-	
-	public void sortMyArrays(Float[] valueDensity,int[] values, int[] weights) {
-		ArrayIndexComparator comparator = new ArrayIndexComparator(valueDensity);
-		Integer[] indexes = comparator.createIndexArray();
-		// indexes is now ordered in ascending valueDensity
-		Arrays.sort(indexes, comparator);
-		int[] valuesSorted = new int[values.length];
-		int[] weightsSorted = new int[weights.length];
-		for (int i=0;i<indexes.length;i++) {
-			valuesSorted[i] = values[indexes[i]];
-			weightsSorted[i] = weights[indexes[i]]; 
-		}
-		
-	}
-	*/
-	
+	 * public Float[] getValueDensity(int[] values,int[] weights) { Float[] result =
+	 * new Float[values.length]; for (int i=0; i < values.length;i++) { float f = (
+	 * (float) values[i] )/ ( (float) weights[i] ); result[i] = Float.valueOf( f );
+	 * } return(result); }
+	 * 
+	 * public void sortMyArrays(Float[] valueDensity,int[] values, int[] weights) {
+	 * ArrayIndexComparator comparator = new ArrayIndexComparator(valueDensity);
+	 * Integer[] indexes = comparator.createIndexArray(); // indexes is now ordered
+	 * in ascending valueDensity Arrays.sort(indexes, comparator); int[]
+	 * valuesSorted = new int[values.length]; int[] weightsSorted = new
+	 * int[weights.length]; for (int i=0;i<indexes.length;i++) { valuesSorted[i] =
+	 * values[indexes[i]]; weightsSorted[i] = weights[indexes[i]]; }
+	 * 
+	 * }
+	 */
+
 	public String solve(int K, int[] values, int[] weights) {
 
 		initBest(values.length);
@@ -202,12 +241,16 @@ public class BBSolver {
 		sorter.sortByValueDensity();
 		int[] valuesSorted = sorter.getSortedValues();
 		int[] weightsSorted = sorter.getSortedWeights();
-		
+
 		int[] itemsTaken = new int[valuesSorted.length];
 		for (int i = 0; i < valuesSorted.length; i++) {
 			itemsTaken[i] = 0;
 		}
-		goElement(0, 0, 0, itemsTaken, K, valuesSorted, weightsSorted);
+		// left half of tree
+		goNode(0, 0, 0, itemsTaken, K, valuesSorted, weightsSorted, true);
+		// right half of tree
+		goNode(0, 0, 0, itemsTaken, K, valuesSorted, weightsSorted, false);
+
 		return (this.createOutput(sorter));
 
 	}
@@ -219,11 +262,6 @@ public class BBSolver {
 		int K = 10;
 		String output = bb.solve(K, values, weights);
 		System.out.println(output);
-		
-		int i = 3;
-		int j = 4;
-		float f = ((float) i ) / ((float) j);
-		System.out.println("f " + f);
 
 	}
 
